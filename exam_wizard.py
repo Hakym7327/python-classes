@@ -15,7 +15,7 @@ def analyse_answer(user_answer, keywords):
 
     
     
-names = ['Akeem Adenuga', 'Wole Soyinka', 'Fel Kuti', 'Yinka Quadri']
+names = ['Akeem Adenuga', 'Wole Soyinka', 'Fel Kuti', 'Yinka Quadri', "Tobi"]
 while True:
     fullname = input('Enter your Fullname: ')
     if fullname in names: 
