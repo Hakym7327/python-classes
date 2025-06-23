@@ -1,0 +1,43 @@
+# 14/4/25
+# String Interpolation
+
+sentence = "Hello World"
+print('The sentence sentence is', sentence)
+
+# f-string ---> Formatted string
+print(f'The {sentence} is again sentence')
+
+# string methods
+# print(dir(''))
+print(sentence.capitalize())
+
+print(sentence.title())
+
+print(sentence.count('l'))
+print(sentence.count(''))
+
+print(sentence.startswith('a'))
+print(sentence.endswith('b'))
+# the return boolean data
+
+print(sentence.find('e'))
+print(sentence.find('World'))
+
+print('{} {}'.format(4, 8))
+
+sentence = 'The guy walks the dogs'
+print(sentence.split(' '))
+print(sentence.strip(' '))
+
+my_sentence_list = sentence.split(' ')
+print(my_sentence_list)
+print(my_sentence_list)
+
+# How to rejoin a splited string
+print('**'. join(my_sentence_list))
+
+#  class_work
+
+
+
+

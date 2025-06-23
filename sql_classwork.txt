@@ -1,0 +1,22 @@
+-- Creating a table
+
+CREATE table users(
+    id INTEGER primary key AUTOINCREMENT,
+    full_name text NOT NULL,
+    email text UNIQUE NOT NULL,
+    user_name text  UNIQUE NOT NULL,
+    phone varchar(16),
+    password text NOT NULL
+    
+    
+    
+);
+INSERT INTO users(full_name, email, user_name, phone, password)
+    values('Hakym Adenuga', 'akeemadenuga@gmail.com', 'hakym7327', '09034327462', 'uehdfhfyh');
+
+
+UPDATE users SET password = 'Pa$$w0rd!'
+WHERE id = 1;
+
+SELECT *
+FROM users; 
