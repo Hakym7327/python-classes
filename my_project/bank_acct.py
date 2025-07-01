@@ -21,6 +21,19 @@ cursor.execute("""
     account_balance ₦ INTEGER NOT NULL
     )
 """)
+cursor.execute("""
+        CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_number INTEGER,
+        account_name TEXT,
+        sender TEXT,
+        transaction_type TEXT,
+        amount INTEGER,
+        recipient TEXT,
+        date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        account_balance ₦
+        )
+    """)
 
 
 def first_page():
@@ -68,7 +81,7 @@ def Create_account():
     while True:
         username = input(f'Enter a username {full_name}: ').strip()
           
-        pattern = r"^[A-Za-z0-9_]{3,20}$"
+        pattern = r"^(?!.*__)[A-Za-z][A-Za-z0-9_]{2,19}$"
         match = re.search(pattern, username)
         if not match:
             print("Invalid input. Make sure it's 3-20 characters and uses only letters, numbers, or underscores.")
@@ -150,10 +163,12 @@ def Create_account():
 
     try:
         cursor.execute("INSERT INTO accounts (account_number, full_name, username, email, password, account_balance) VALUES(?, ?, ?, ?, ?, ?)", (account_number, full_name, username, email, hashed_password, account_balance))
+        cursor.execute("INSERT INTO transactions (account_number, account_name, transaction_type, amount, account_balance) VALUES(?, ?, ?, ?, ?)", (account_number, full_name, "Deposit", account_balance, account_balance))
+    
     except sqlite3.IntegrityError as e:
         print('Intergrity Error: ', e)
     else:
-        print("Loading", end="")
+        print("Creating account", end="")
         for _ in range(4):
             time.sleep(1)
             print(".", end="", flush=True)
@@ -175,7 +190,7 @@ def log_in():
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
         user = cursor.execute(" SELECT id, full_name, username, account_number, email FROM accounts WHERE username = ? AND password = ?", (username, hashed_password)).fetchone()
         if user is not None:
-            print("Loading", end="")
+            print("Logging in", end="")
             for _ in range(4):
                 time.sleep(1)
                 print(".", end="", flush=True)
@@ -210,14 +225,14 @@ def bank_menu(user):
         if choice == "1":
             print("Loading", end="")
             for _ in range(3):
-                time.sleep(0.5)
+                time.sleep(0.4)
                 print(".", end="", flush=True)
             deposit(user)
 
         elif choice == "2":
-            print("Loading", end="")
+            print("Recieving your balance ", end="")
             for _ in range(3):
-                time.sleep(0.5)
+                time.sleep(0.4)
                 print(".", end="", flush=True)
             balance(user)
             
@@ -225,46 +240,50 @@ def bank_menu(user):
         elif choice == "3":
             print("Loading", end="")
             for _ in range(3):
-                time.sleep(0.5)
+                time.sleep(0.4)
                 print(".", end="", flush=True)
             withdrawal(user)
 
         elif choice == "4":
             print("Loading", end="")
             for _ in range(3):
-                time.sleep(0.5)
+                time.sleep(0.4)
                 print(".", end="", flush=True)
             transfer(user)
 
         elif choice == "5":
-            print("Loading", end="")
+            print("Receiving history", end="")
             for _ in range(3):
-                time.sleep(0.5)
+                time.sleep(0.4)
                 print(".", end="", flush=True)
             transaction(user)
 
         elif choice == "6":
-            print("Loading", end="")
+            print("Receiving", end="")
             for _ in range(3):
-                time.sleep(0.5)
+                time.sleep(0.4)
                 print(".", end="", flush=True)
             account_details(user)
 
         elif choice == "7":
-            choice = input("\nAre you sure you wanna log out Yes/No: ").strip().lower()
-            if choice == 'yes': 
-                print("Loading", end="")
-                for _ in range(3):
-                    time.sleep(0.5)
-                    print(".", end="", flush=True)
-                print("Good bye 👋")
-                first_page()
-            elif choice == 'no':
-                print("Loading", end="")
-                for _ in range(3):
-                    time.sleep(0.3)
-                    print(".", end="", flush=True)
-                continue
+            while True:
+                choice = input("\nAre you sure you wanna log out Yes/No: ").strip().lower()
+                if choice == 'yes': 
+                    print("Logging out", end="")
+                    for _ in range(3):
+                        time.sleep(0.4)
+                        print(".", end="", flush=True)
+                    print("Good bye 👋")
+                    first_page()
+                elif choice == 'no':
+                    print("Loading", end="")
+                    for _ in range(3):
+                        time.sleep(0.2)
+                        print(".", end="", flush=True)
+                    bank_menu(user)
+                else:
+                    print('Invalid input!')
+                    continue
         
         else:
              print("Invalid choice.")
@@ -299,20 +318,11 @@ def deposit(user):
         print(".", end="", flush=True)
     print(f"\nDeposit Sucessful\nYour New Balance is: ₦{account_balance}")
     cursor.execute("UPDATE accounts SET account_balance = ? WHERE account_number = ?", (account_balance, account_number))
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS transactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        account_number INTEGER,
-        full_name TEXT,
-        transaction_type TEXT,
-        amount INTEGER,
-        account_balance ₦
-        )
-    """)
-    cursor.execute("INSERT INTO transactions (account_number, full_name, transaction_type, amount, account_balance) VALUES(?, ?, ?, ?, ?)", (account_number, full_name, "Deposit", deposit_amount, account_balance))
+    cursor.execute("INSERT INTO transactions (account_number, account_name, transaction_type, amount, account_balance) VALUES(?, ?, ?, ?, ?)", (account_number, full_name, "Deposit", deposit_amount, account_balance))
     conn.commit()
     
 def balance(user):
+    
     id, full_name, username, account_number, email = user
     user_info = cursor.execute(" SELECT id, account_balance FROM accounts WHERE account_number = ?", (account_number,)).fetchone()
     id, account_balance = user_info
@@ -343,42 +353,37 @@ def withdrawal(user):
                 continue
 
         account_balance -= withdrawal_amount
-        print("Loading", end="")
+        print("Withdrawal in process", end="")
         for _ in range(3):
             time.sleep(1)
             print(".", end="", flush=True)
         print(f"\n\nYour withdrawal of ₦{withdrawal_amount} is succesfull.\nYour available balance is: ₦{account_balance}.")
 
         cursor.execute("UPDATE accounts SET account_balance = ? WHERE full_name = ?", (account_balance, full_name))
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account_number INTEGER,
-            full_name TEXT,
-            transaction_type TEXT,
-            amount INTEGER,
-            account_balance ₦
-            )
-          """)
-        cursor.execute("INSERT INTO transactions (account_number, full_name, transaction_type, amount, account_balance) VALUES(?, ?, ?, ?, ?)", (account_number, full_name, "Withdrawal", withdrawal_amount, account_balance))
+        
+        cursor.execute("INSERT INTO transactions (account_number, account_name, transaction_type, amount, account_balance) VALUES(?, ?, ?, ?, ?)", (account_number, full_name, "Withdrawal", withdrawal_amount, account_balance))
         conn.commit()
+
         redo = input("\nDo you want to make another withdrawal Yes/No: ").strip().lower()
         if redo == 'yes':
             print("Loading", end="")
             for _ in range(3):
-                time.sleep(0.5)
+                time.sleep(0.3)
                 print(".", end="", flush=True)
             withdrawal(user)
+            
         elif redo == 'no':
             print("Loading", end="")
             for _ in range(3):
-                time.sleep(0.5)
+                time.sleep(0.3)
                 print(".", end="", flush=True)
             bank_menu(user)
         else:
             print("Invalid Input")
-    
+            withdrawal(user)
+
 def transfer(user):
+    
 
     id, full_name, username, account_number, email = user
     user_info = cursor.execute(" SELECT id, account_balance FROM accounts WHERE account_number = ?", (account_number,)).fetchone()
@@ -397,9 +402,9 @@ def transfer(user):
                 print("\nRecipient cannot be found!!")
                 continue
             recipient_id, recipient_name, recipient_balance = recipient_info
-            print("Loading", end="")
+            print("Checking recipient info", end="")
             for _ in range(3):
-                time.sleep(0.2)
+                time.sleep(0.3)
                 print(".", end="", flush=True)
             print(f"\n\nRecipient found.\nFull_name: {recipient_name}")
 
@@ -429,7 +434,7 @@ def transfer(user):
 
         account_balance -= transfer_amount
         recipient_balance += transfer_amount
-        print("Loading", end="")
+        print("Transfer in progress", end="")
         for _ in range(4):
             time.sleep(1)
             print(".", end="", flush=True)
@@ -438,46 +443,44 @@ def transfer(user):
 
     cursor.execute("UPDATE accounts SET account_balance = ? WHERE account_number = ?", (account_balance, account_number))
     cursor.execute("UPDATE accounts SET account_balance = ? WHERE account_number = ?", (recipient_balance, recipient_account))
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS transactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        account_number INTEGER,
-        full_name TEXT,
-        transaction_type TEXT,
-        amount INTEGER,
-        account_balance ₦
-        )
-    """)
-    cursor.execute("INSERT INTO transactions (account_number, full_name, transaction_type, amount, account_balance) VALUES(?, ?, ?, ?, ?)", (account_number, full_name, "Debit", transfer_amount, account_balance))
-    cursor.execute("INSERT INTO transactions (account_number, full_name, transaction_type, amount, account_balance) VALUES(?, ?, ?, ?, ?)", (recipient_account, recipient_name, "Credit", transfer_amount, recipient_balance))
+   
+    cursor.execute("INSERT INTO transactions (account_number, account_name, transaction_type, amount, recipient, account_balance) VALUES(?, ?, ?, ?, ?, ?)", (account_number, full_name, "Debit", transfer_amount, recipient_name, account_balance))
+    cursor.execute("INSERT INTO transactions (account_number, account_name, sender, transaction_type, amount, account_balance) VALUES(?, ?, ?, ?, ?, ?)", (recipient_account, recipient_name, full_name, "Credit", transfer_amount, recipient_balance))
     conn.commit()
       
 def transaction(user):
-
-
     id, full_name, username, account_number, email = user
-    transactions = cursor.execute(" SELECT transaction_type, amount, account_balance FROM transactions WHERE account_number = ?", (account_number,)).fetchall()
+    transactions = cursor.execute(" SELECT sender, transaction_type, amount, recipient, date, account_balance FROM transactions WHERE account_number = ?", (account_number,)).fetchall()
     if transactions is None:
         print("\nThere is no transaction history")
     for transaction in transactions:
-        transaction_type, amount, available_balance = transaction
-        print(f"\nTransaction type: '{transaction_type}' | Amount: ₦{amount} | Available_balance: ₦{available_balance}")
+        sender, transaction_type, amount, recipient, date, available_balance = transaction
+        if sender is None and recipient is None:
+            print(f"\nTransaction type: '{transaction_type}' | Amount: ₦{amount} | Date: {date} | Available_balance: ₦{available_balance}")
+        elif sender is None:
+            print(f"\nTransaction type: '{transaction_type}' | Amount: ₦{amount} | Recipient: {recipient} | Date: {date} | Available_balance: ₦{available_balance}")
+        elif recipient is None:
+            print(f"\nTransaction type: '{transaction_type}' | Amount: ₦{amount} | Sender: {sender} | Date: {date} | Available_balance: ₦{available_balance}")
         
 def account_details(user):
+      
       id, full_name, username, account_number, email = user
-      print(f"\nFullname: {full_name} | Account number: {account_number} | Username: {username} | Email: {email}")
+      print(f"\n\nFullname: {full_name} | Account number: {account_number} | Username: {username} | Email: {email}")
+
+
+
+while True:
       
       
        
    
-
-while True:
+   
+    first_page()
      
 
 
 
 
-    first_page()
    
     
             
@@ -496,6 +499,7 @@ while True:
         
 
                
+
 
 
 
